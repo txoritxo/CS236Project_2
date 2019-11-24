@@ -1,0 +1,97 @@
+import os
+import numpy as np
+# import errno
+# import torchvision.utils as vutils
+# from tensorboardX import SummaryWriter
+# from IPython import display
+from matplotlib import pyplot as plt
+import torch
+
+
+'''
+    TensorBoard Data will be stored in './runs' path
+'''
+def create_subdirs(root, subdirs):
+
+    for d in subdirs:
+        this_dir = os.path.join(root, d)
+        if not os.path.exists(this_dir):
+            os.makedirs(this_dir)
+
+
+class Logger:
+
+    def __init__(self, model_name, dir, model, epoch=0):
+        self.model_name = model_name
+        self.dir = dir
+
+        create_subdirs(dir, ('checkpoint', 'plots'))
+
+        csvname = os.path.join(dir, model_name +'-e' + str(epoch)+ '.csv')
+        self.csv = open(csvname, 'w')
+        if self.csv is None:
+            raise Exception('unable to open csv file ' + csvname + ' for writing')
+        self.the_model = model
+
+    def qdisplay_header(self):
+        hd = '\n{:>10s}, {:3s}, {:15s}, {:10s}, {:10s}, {:10s}, {:10s}'.format(
+            't', 'epoch', 'batch/nbatches', 'd_loss', 'g_loss', 'D_LOSS', 'G_LOSS')
+        print(hd)
+        self.csv.write(hd)
+
+    def qdisplay_status2(self, t, epoch, nbatch, num_batches,d_error, g_error, g_loss_acum, d_loss_acum):
+        print('\n{:10.0f}, {:03d}, {:7d}/{:7d}, {:10.4f}, {:10.4f}, {:10.4f}, {:10.4f}'.format(
+            t, epoch, nbatch, num_batches, d_error, g_error, d_loss_acum, g_loss_acum)
+        )
+
+    def qdisplay_status(self, t, epoch, g_loss_acum, d_loss_acum):
+        st = '\n{:10.0f}, {:03d}, {:10.4f}, {:10.4f}'.format(
+            t, epoch, d_loss_acum, g_loss_acum)
+        print(st)
+        self.csv.write(st)
+
+    def save_models(self, epoch):
+        name='{}-e{:04d}.pth'.format(self.model_name, epoch)
+        full_filename=os.path.join(self.dir, 'checkpoint',name)
+        self.the_model.save(full_filename, epoch)
+
+    def _plot1D(self,ax, data,batches, color='blue',width=0.5):
+        xpoints = np.arange(len(data[0]))
+        for i in range(batches):
+            ypoints = data[i, :, 0].detach().cpu().numpy()
+            ax.plot(xpoints, ypoints, color=color, linewidth=width)
+
+    def _plot2D(self,ax, data,batches, color='blue',width=0.5):
+        for i in range(batches):
+            ypoints = data[i, :, 0].detach().cpu().numpy()
+            xpoints = data[i, :, 1].detach().cpu().numpy()
+            ax.plot(xpoints, ypoints, color=color, linewidth=width)
+
+    def plot(self, epoch, gen_data, real_data, nsamples=10):
+        fig = plt.figure()
+        ax = plt.axes()
+        batches = min(nsamples, len(gen_data))
+        nfeatures=gen_data.size(2)
+        if nfeatures == 1:
+            self._plot1D(ax, data=real_data, batches=batches, color='grey', width=0.2)
+            self._plot1D(ax, data=gen_data, batches=batches, color='blue', width=0.5)
+
+        else:
+            self._plot2D(ax, data=real_data, batches=batches, color='grey', width=0.2)
+            self._plot2D(ax, data=gen_data, batches=batches, color='blue', width=0.5)
+
+        name='{}-e{:04d}.png'.format(self.model_name, epoch)
+        full_filename=os.path.join(self.dir, 'plots',name)
+        fig.savefig(full_filename)
+        plt.close()
+
+    def on_epoch(self, t, epoch, g_loss, d_loss, gen_data, real_data):
+        if epoch==0:
+            self.qdisplay_header()
+        self.qdisplay_status(t, epoch, g_loss, d_loss)
+        self.save_models(epoch)
+        self.plot(epoch, gen_data, real_data)
+        self.csv.flush()
+
+    def close(self):
+        self.csv.close()
