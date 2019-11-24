@@ -50,7 +50,7 @@ class QDiscriminator(nn.Module):
     def forward(self, x):
         out,h = self.LSTM(x)
         out = self.fc(out)
-        out = self.sigmoid(out)
+        # out = self.sigmoid(out)
         return out
 
 
@@ -63,7 +63,8 @@ class GAN():
         self.d_optimizer    = optim.Adam(self.discriminator.parameters(), lr=self.lr, betas=(0.5,0.999))
         # self.d_optimizer = optim.SGD(self.discriminator.parameters(), lr=self.lr)
         # self.loss = nn.BCEWithLogitsLoss()
-        self.loss = nn.BCELoss(reduction='mean')
+        # self.loss = nn.BCELoss(reduction='mean')
+        self.loss = nn.BCEWithLogitsLoss(reduction='mean')
         self.config = config
 
     def train_discriminator(self, real_data, fake_data):
