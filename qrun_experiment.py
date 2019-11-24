@@ -125,7 +125,7 @@ def run_experiment(filename):
         t = time() - t0
         logger.on_epoch(t, epoch, g_loss, d_loss, gen_data, real_data)
 
-# run_experiment('config/template.ini')
-run_experiment('config/revisit_milestone.ini')
+run_experiment('config/revisit_milestone_lr1e-5.ini')
+#run_experiment('config/revisit_milestone.ini')
 
 # run_experiment("./logs/FirstTest/checkpoint/FirstTest-e0670.pth")
