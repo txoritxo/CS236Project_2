@@ -14,6 +14,29 @@ import argparse
 
 qseed = 125
 
+class GenDisLoop:
+    max_D_loops = 5
+    max_G_loops = 5
+    switch_epoch = 5
+    def __init__(self, is_adaptative, G_loops, D_loops):
+        self.is_adaptative = is_adaptative
+        self.D_loops = GenDisLoop.max_D_loops if  is_adaptative else D_loops
+        self.G_loops = 1 if is_adaptative else G_loops
+
+    def __get_nloops(self, epoch, current_val, max_val):
+        if epoch % GenDisLoop.switch_epoch == 0 and self.is_adaptative:
+            current_val = 1 if current_val == max_val else max_val
+        return current_val
+
+    def get_D_loops(self, epoch):
+        self.D_loops = self.__get_nloops(epoch, self.D_loops, self.max_D_loops)
+        return self.D_loops
+
+    def get_G_loops(self, epoch):
+        self.G_loops = self.__get_nloops(epoch, self.G_loops, self.max_G_loops)
+        return self.G_loops
+
+
 def plot_data(data, name='temp'):
     fig = plt.figure()
     ax = plt.axes()
@@ -83,7 +106,7 @@ def copy_config_file_to_logs_folder(filename, id):
         os.makedirs(target_dir)
     shutil.copy2(filename, target_dir)
 
-def run_experiment(filename):
+def run_experiment(filename, is_adaptative):
     the_gan = None
     cfg = None
     epoch0 = 0
@@ -108,12 +131,18 @@ def run_experiment(filename):
     Tensor = torch.cuda.FloatTensor if device.type == 'cuda' else torch.FloatTensor
     nepochs = cfg['nepochs']
 
+    nloop = GenDisLoop(is_adaptative, cfg['G_loops'], cfg['D_loops'])
+
     t0 = time()
+
     for epoch in range(epoch0, nepochs):
+        g_loops = nloop.get_G_loops(epoch+1)
+        d_loops = nloop.get_D_loops(epoch+1)
+        # print('\nEpoch {} training Generator {} times and Discriminator {} times\n'.format(epoch, g_loops, d_loops))
         for batch,(batch_data) in enumerate(train_dataloader):
             # Configure input
             real_data = Variable(batch_data.type(Tensor)).to(device)
-            for g_loop in range(cfg['G_loops']):
+            for g_loop in range(g_loops):
                 # -----------------
                 #  Train Generator
                 # -----------------
@@ -126,7 +155,7 @@ def run_experiment(filename):
             # ---------------------
             #  Train Discriminator
             # ---------------------
-            for d_loop in range(cfg['D_loops']):
+            for d_loop in range(d_loops):
                 z = noise((cfg['batch_size'], cfg['lsequence'], cfg['latent_dimension']), device)
                 gen_data = the_gan.generator(z)
                 d_loss = the_gan.train_discriminator(real_data, gen_data)
@@ -137,8 +166,9 @@ def run_experiment(filename):
 
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--config_file', help='ini configuration file that defines the experiment', default="config/template.ini")
+parser.add_argument("--adaptative", help="changes G and D training loops dynamically", action='store_true')
 args = parser.parse_args()
-run_experiment(args.config_file)
+run_experiment(args.config_file, args.adaptative)
 #run_experiment('config/revisit_milestone.ini')
 
 # run_experiment("./logs/FirstTest/checkpoint/FirstTest-e0670.pth")
