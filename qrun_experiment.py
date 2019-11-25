@@ -10,6 +10,7 @@ from torch.autograd.variable import Variable
 import matplotlib.pyplot as plt
 from time import time
 from torch.utils.data.sampler import SubsetRandomSampler
+import argparse
 
 qseed = 125
 
@@ -75,6 +76,12 @@ def resume_training(checkpoint_file):
         print('\n error loading model from checkpoint file ' + checkpoint_file)
         sys.exit()
 
+def copy_config_file_to_logs_folder(filename, id):
+    import shutil
+    target_dir = os.path.join('logs', id)
+    if not os.path.exists(target_dir):
+        os.makedirs(target_dir)
+    shutil.copy2(filename, target_dir)
 
 def run_experiment(filename):
     the_gan = None
@@ -85,11 +92,13 @@ def run_experiment(filename):
         cfg=qconfig.parse_config_file(filename)
         train_dataloader, _ = load_dataset(cfg)
         the_gan = qmodels.GAN_factory.model_from_config(cfg)
+        copy_config_file_to_logs_folder(filename, cfg['id'])
+
     elif filename.endswith('.pth'):
         the_gan, cfg, epoch0 = resume_training(filename)
         train_dataloader, _ = load_dataset(cfg)
     else:
-        raise Exception('file ' + filename + ' not supported, use a .pth or .cfg file')
+        raise Exception('file ' + filename + ' not supported, use a .pth or .ini file')
 
     directory=os.path.join('experiments', cfg['id'])
     device = torch.device('cuda' if torch.cuda.is_available() and cfg['use_cuda'] else 'cpu')
@@ -125,7 +134,11 @@ def run_experiment(filename):
         t = time() - t0
         logger.on_epoch(t, epoch, g_loss, d_loss, gen_data, real_data)
 
-run_experiment('config/revisit_milestone_lr1e-5.ini')
+
+parser = argparse.ArgumentParser(description='')
+parser.add_argument('--config_file', help='ini configuration file that defines the experiment', default="config/template.ini")
+args = parser.parse_args()
+run_experiment(args.config_file)
 #run_experiment('config/revisit_milestone.ini')
 
 # run_experiment("./logs/FirstTest/checkpoint/FirstTest-e0670.pth")
