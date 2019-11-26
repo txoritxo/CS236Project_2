@@ -49,13 +49,12 @@ class QDiscriminator(nn.Module):
         self.hidR       = hidRNN
         self.nlayers    = nlayers
         if cell_type in "LSTM":
-            self.mem_cell   = nn.LSTM(self.z_dim, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
+            self.mem_cell   = nn.LSTM(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
         elif cell_type in "GRU":
-            self.mem_cell = nn.GRU(self.z_dim, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
+            self.mem_cell = nn.GRU(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
         else:
             raise Exception('Cell Type {} not recognized building the Discriminator'.format(cell_type))
 
-        self.mem_cell   = nn.mem_cell(self.nfeatures, self.hidR, self.nlayers, batch_first=True,bidirectional=bidirectional)
         # self.GRU1       = nn.GRU(self.hidC, self.hidR)
         self.fc         = nn.Linear(self.hidR, self.output_size)
         self.sigmoid    = nn.Sigmoid()
