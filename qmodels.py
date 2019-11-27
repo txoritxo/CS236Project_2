@@ -4,16 +4,16 @@ import torch.nn as nn
 from torch.autograd.variable import Variable
 
 class QGenerator(nn.Module):
-    def __init__(self, z_dim, output_size, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM'):
+    def __init__(self, z_dim, output_size, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM', dropout=dropout):
         super(QGenerator, self).__init__()
         self.hidR       = hidRNN
         self.z_dim      = z_dim
         self.output_size = output_size
         self.nlayers    = nlayers
         if cell_type in "LSTM":
-            self.mem_cell   = nn.LSTM(self.z_dim, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
+            self.LSTM   = nn.LSTM(self.z_dim, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
         elif cell_type in "GRU":
-            self.mem_cell = nn.GRU(self.z_dim, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
+            self.LSTM = nn.GRU(self.z_dim, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
         else:
             raise Exception('Cell Type {} not recognized building the Generator'.format(cell_type))
 
@@ -27,7 +27,7 @@ class QGenerator(nn.Module):
         print('\n Created Generator Class:\n ' + str(self))
 
     def forward(self,z):
-        out,h = self.mem_cell(z)
+        out,h = self.LSTM(z)
         out = self.fc(out)
         out = self.tanh(out)
         return out
@@ -42,16 +42,16 @@ class QGenerator(nn.Module):
 
 
 class QDiscriminator(nn.Module):
-    def __init__(self, nfeatures, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM' ):
+    def __init__(self, nfeatures, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=dropout ):
         super(QDiscriminator, self).__init__()
         self.output_size= nfeatures
         self.nfeatures  = nfeatures
         self.hidR       = hidRNN
         self.nlayers    = nlayers
         if cell_type in "LSTM":
-            self.mem_cell   = nn.LSTM(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
+            self.LSTM   = nn.LSTM(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
         elif cell_type in "GRU":
-            self.mem_cell = nn.GRU(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional)
+            self.LSTM= nn.GRU(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
         else:
             raise Exception('Cell Type {} not recognized building the Discriminator'.format(cell_type))
 
@@ -61,7 +61,7 @@ class QDiscriminator(nn.Module):
         print('\n Created Discriminator Class:\n ' + str(self))
 
     def forward(self, x):
-        out,h = self.mem_cell(x)
+        out,h = self.LSTM(x)
         out = self.fc(out)
         # out = self.sigmoid(out)
         return out
@@ -159,7 +159,8 @@ class GAN_factory:
 
     @staticmethod
     def default_gan(latent_dim = 10, nfeatures=1 , gen_hidRNN=100, gen_memory_layers=1,
-                    dis_hidRNN=100, dis_memory_layers=1, use_cuda=False, lr=0.05, config=None, g_cell_type='LSTM', d_cell_type='LSTM'):
+                    dis_hidRNN=100, dis_memory_layers=1, use_cuda=False, lr=0.05, config=None,
+                    g_cell_type='LSTM', d_cell_type='LSTM',g_dropout=0, d_dropout=0):
 
         device = torch.device('cuda' if torch.cuda.is_available() and use_cuda else 'cpu')
 
@@ -167,9 +168,10 @@ class GAN_factory:
         d_cell_type, d_bidirectional = GAN_factory.get_cell_type_from_config(d_cell_type)
 
         generator = QGenerator(z_dim=latent_dim, output_size=nfeatures, hidRNN=gen_hidRNN, nlayers=gen_memory_layers,
-                               cell_type=g_cell_type, bidirectional=g_bidirectional).to(device)
+                               cell_type=g_cell_type, bidirectional=g_bidirectional, dropout=g_dropout).to(device)
+
         discriminator = QDiscriminator(nfeatures=nfeatures, hidRNN=dis_hidRNN, nlayers=dis_memory_layers,
-                                       cell_type=d_cell_type, bidirectional=d_bidirectional).to(device)
+                                       cell_type=d_cell_type, bidirectional=d_bidirectional, dropout=d_dropout).to(device)
         # generator = generator.float()
         # discriminator = discriminator.float()
         gan = GAN(generator, discriminator, lr, config=config)
@@ -185,11 +187,19 @@ class GAN_factory:
         if not is_default:
             raise Exception('Only default GAN is supported at this time, please choose RNN and LSTM as type and cell for G and D')
 
-        return GAN_factory.default_gan(latent_dim=cfg['latent_dimension'], nfeatures=cfg['nfeatures'],
-                                       gen_hidRNN=cfg['generator_hidden_units'], gen_memory_layers=cfg['generator_RNN_layers'],
-                                       dis_hidRNN=cfg['discriminator_hidden_units'], dis_memory_layers=cfg['discriminator_RNN_layers'],
-                                       use_cuda=cfg['use_cuda'], lr=cfg['lr'], config=cfg, g_cell_type=cfg['generator_RNN_cell'],
-                                       d_cell_type=cfg['discriminator_RNN_cell'])
+        return GAN_factory.default_gan(latent_dim=cfg['latent_dimension'],
+                                       nfeatures=cfg['nfeatures'],
+                                       gen_hidRNN=cfg['generator_hidden_units'],
+                                       gen_memory_layers=cfg['generator_RNN_layers'],
+                                       dis_hidRNN=cfg['discriminator_hidden_units'],
+                                       dis_memory_layers=cfg['discriminator_RNN_layers'],
+                                       use_cuda=cfg['use_cuda'],
+                                       lr=cfg['lr'],
+                                       config=cfg,
+                                       g_cell_type=cfg['generator_RNN_cell'],
+                                       d_cell_type=cfg['discriminator_RNN_cell'],
+                                       g_dropout=cfg['generator_dropout'],
+                                       d_dropout=cfg['discriminator_dropout'])
 
     @staticmethod
     def model_from_checkpoint(path):

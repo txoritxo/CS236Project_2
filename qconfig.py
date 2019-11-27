@@ -17,11 +17,13 @@ def parse_config_file(filename):
         the_config['generator_hidden_units'] = config['model'].getint('generator_hidden_units', 10)
         the_config['generator_RNN_layers'] = config['model'].getint('generator_RNN_layers', 1)
         the_config['generator_RNN_layers'] = config['model'].getint('generator_RNN_layers', 1)
+        the_config['generator_dropout'] = config['model'].getint('generator_dropout', 0)
 
         the_config['discriminator_type'] = config['model'].get('discriminator_type', 'RNN')
         the_config['discriminator_RNN_cell'] = config['model'].get('discriminator_RNN_cell', 'LSTM')
         the_config['discriminator_hidden_units'] = config['model'].getint('discriminator_hidden_units', 10)
         the_config['discriminator_RNN_layers'] = config['model'].getint('discriminator_RNN_layers', 1)
+        the_config['discriminator_dropout'] = config['model'].getint('discriminator_dropout', 0)
     else:
         raise Exception('configuration file does not have a [model] section')
 
