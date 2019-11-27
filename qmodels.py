@@ -4,7 +4,7 @@ import torch.nn as nn
 from torch.autograd.variable import Variable
 
 class QGenerator(nn.Module):
-    def __init__(self, z_dim, output_size, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM', dropout=dropout):
+    def __init__(self, z_dim, output_size, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM', dropout=0):
         super(QGenerator, self).__init__()
         self.hidR       = hidRNN
         self.z_dim      = z_dim
@@ -42,7 +42,7 @@ class QGenerator(nn.Module):
 
 
 class QDiscriminator(nn.Module):
-    def __init__(self, nfeatures, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=dropout ):
+    def __init__(self, nfeatures, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=0):
         super(QDiscriminator, self).__init__()
         self.output_size= nfeatures
         self.nfeatures  = nfeatures
