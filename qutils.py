@@ -144,7 +144,7 @@ def flight_family_to_kml(name, file_list):
 
     kml.save(name+'.kml')
 
-def test_kml():
+def qtest_kml():
     kml = simplekml.Kml(open=1)
 
     # Create a linestring with two points (ie. a line)
@@ -375,10 +375,10 @@ def resample_dataframe(data):
     data = data.dropna()
     return data
 
-def load_adapt_file(filename, samples_per_flight=100):
-    lon_limits  = (-2.84, 2.50)
-    # lat_limits = (49.45, 52.8)
-    lat_limits = (49.45, 51.26)
+def load_adapt_file(filename, samples_per_flight=100, lon_limits=None, lat_limits=None):
+    # lon_limits  = (-2.84, 2.50)
+    # # lat_limits = (49.45, 52.8)
+    # lat_limits = (49.45, 51.26)
     data=pd.read_pickle(filename)
     flights_grouped=data.groupby(['part_date_utc','flight'])
     name = 'flights' + str(data['part_date_utc'][0])
@@ -435,7 +435,64 @@ def load_adapt_file(filename, samples_per_flight=100):
     kml.save('./kml/'+name+'.kml')
     return all_data, flights_processed
 
-def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', samples_per_flight=100):
+def sample_equispaced(samples_per_flight, data):
+    numel = len(data)
+    idx = np.linspace(0,numel,num=samples_per_flight, dtype=int, endpoint=False)
+    new_data = data[idx,]
+    return new_data
+
+def remove_slow_speed(data, min_speed):
+    return data[data['ground_speed']>=min_speed]
+
+def load_adapt_file2(filename, samples_per_flight=100, lon_limits=None, lat_limits=None):
+    # lon_limits  = (-2.84, 2.50)
+    # # lat_limits = (49.45, 52.8)
+    # lat_limits = (49.45, 51.26)
+    data=pd.read_pickle(filename)
+    flights_grouped=data.groupby(['part_date_utc','flight'])
+    name = 'flights' + str(data['part_date_utc'][0])
+    i=0
+    kml = simplekml.Kml(open=1)
+    # sz = 250
+    sz=samples_per_flight
+    all_data = np.empty((0,sz,2), dtype='float64')
+    flights_processed = 0
+    min_speed=145
+    for key, current_flight in flights_grouped:
+        i +=1
+        if len(current_flight) < samples_per_flight: continue
+        current_flight = remove_duplicates(current_flight)
+        current_flight = remove_slow_speed(current_flight, min_speed)
+        current_flight = current_flight[['latitude', 'longitude', 'altitude']]
+        current_flight = resample_dataframe(current_flight)
+        time_stamp = current_flight.index.to_numpy()
+        # resample_dataframe(current_flight)
+        time_stamp = time_stamp-time_stamp[0]
+        delta_time = time_stamp / np.timedelta64(1, 's')
+        # temp_data = current_flight[['latitude', 'longitude', 'altitude']]
+        np_data = current_flight.to_numpy()
+        # np_data = filter_by_start_position(np_data)
+        if np_data is None:
+            continue
+        np_data = apply_savgol_filter(np_data)
+        np_data = sample_equispaced(samples_per_flight, np_data)
+        # np_data = clip_to_size(np_data, sz)
+        norm_data = np.copy(np_data)
+        # normalize_flight_data(norm_data, lon_limits, lat_limits)
+        norm_data = norm_data[:, [0, 1]]
+        # norm_data = clip_to_size(norm_data, sz)
+        if norm_data is not None:
+            norm_data = np.expand_dims(norm_data, axis=0)
+            # all_data  = np.append(all_data, norm_data, axis=0)
+            flights_processed +=1
+            add_linestring(kml, np_data[:,[1,0]], name)
+
+    kml.save('./kml/'+name+'.kml')
+    all_data=None
+    return all_data, flights_processed
+
+
+def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', samples_per_flight=100, lon_limits=None, lat_limits=None):
     dataset = np.empty((0, samples_per_flight, 2), dtype='float64')  # sequence of length 250 and 2 channels lon & lat
     nfiles_processed = 0
     total_flights = 0
@@ -444,7 +501,7 @@ def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', samples_pe
             if fname.endswith('.pickle'):
                 print('\nProcessing file ' + fname)
                 nfiles_processed +=1
-                data , flights_in_file= load_adapt_file(os.path.join(rootDir, fname), samples_per_flight)
+                data , flights_in_file= load_adapt_file2(os.path.join(rootDir, fname), samples_per_flight, lon_limits=lon_limits, lat_limits=lat_limits)
                 dataset = np.append(dataset, data, axis=0)
                 total_flights += flights_in_file
                 if nfiles_processed >= max_nfiles: break
@@ -512,7 +569,8 @@ def create_subset_from_file(filename, nflights):
 # load_and_filter_data('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/2017\SBMG_to_SBSP\YN111_PR_GEH_GOT_2017_RD0003469109.esb.npy',200,2000,2000)
 # load_adapt_file('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/GW_dataset/flights_2019-04-23.pickle')
 # my_test(10)
-create_adapt_dataset('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/GW_dataset', 1, samples_per_flight=200, name='GW20KF200lDC')
+# create_adapt_dataset('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/GW_dataset', 1, samples_per_flight=200, name='GW20KF200lDC', lon_limits  = (-2.84, 2.50),lat_limits = (49.45, 51.26))
+create_adapt_dataset('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/JFK2LAX_dataset', 1, samples_per_flight=10, name='JFK2LAXTest')
 # open_and_plot_npy_flight_file('GW20KF200l.npy', 500)
 # open_and_plot_lon_lat('subset_20000_flights.npy')
 # create_subset_from_file('GW20KF200l.npy', 20000)
