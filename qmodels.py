@@ -189,6 +189,9 @@ class GAN_factory:
         if not is_default:
             raise Exception('Only default GAN is supported at this time, please choose RNN and LSTM as type and cell for G and D')
 
+        if not 'generator_dropout'in cfg: cfg['generator_dropout'] = 0
+        if not 'discriminator_dropout' in cfg: cfg['discriminator_dropout'] = 0
+
         return GAN_factory.default_gan(latent_dim=cfg['latent_dimension'],
                                        nfeatures=cfg['nfeatures'],
                                        gen_hidRNN=cfg['generator_hidden_units'],
