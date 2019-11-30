@@ -41,7 +41,6 @@ class QGenerator(nn.Module):
                 param.data.fill_(1)
                 print('\n bias set to 1 in generator')
 
-
 class QDiscriminator(nn.Module):
     def __init__(self, nfeatures, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=0):
         super(QDiscriminator, self).__init__()

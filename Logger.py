@@ -21,11 +21,16 @@ def create_subdirs(root, subdirs):
 
 class Logger:
 
-    def __init__(self, model_name, dir, model, epoch=0):
+    def __init__(self, model_name, dir, model, epoch=0, post_process=False):
         self.model_name = model_name
         self.dir = dir
+        self.is_post_process = post_process
 
-        create_subdirs(dir, ('checkpoint', 'plots'))
+        if post_process is False:
+            create_subdirs(dir, ('checkpoint', 'plots'))
+        else:
+            # create_subdirs(dir, ('results'))
+            create_subdirs(os.path.join(dir,'results'),('plots','tables'))
 
         csvname = os.path.join(dir, model_name +'-e' + str(epoch)+ '.csv')
         self.csv = open(csvname, 'w')
@@ -67,6 +72,14 @@ class Logger:
             xpoints = data[i, :, 1].detach().cpu().numpy()
             ax.plot(xpoints, ypoints, color=color, linewidth=width)
 
+    def _dual_plot(self, plt1, plt2, data, batches, color='blue', width=0.5):
+        for i in range(batches):
+            ypoints = data[i, :, 0].detach().cpu().numpy()
+            xpoints = data[i, :, 1].detach().cpu().numpy()
+            zpoints= data[i, :, 2].detach().cpu().numpy()
+            plt1.plot(xpoints, ypoints, color=color, linewidth=width)
+            plt2.plot(zpoints, color=color, linewidth=width)
+
     def plot(self, epoch, gen_data, real_data, nsamples=10):
         fig = plt.figure()
         ax = plt.axes()
@@ -76,12 +89,24 @@ class Logger:
             self._plot1D(ax, data=real_data, batches=batches, color='grey', width=0.2)
             self._plot1D(ax, data=gen_data, batches=batches, color='blue', width=0.5)
 
-        else:
+        elif nfeatures == 2:
             self._plot2D(ax, data=real_data, batches=batches, color='grey', width=0.2)
             self._plot2D(ax, data=gen_data, batches=batches, color='blue', width=0.5)
+        elif nfeatures == 3:
+            newsize=fig.get_size_inches()*[2,1]
+            fig.set_size_inches(newsize[0], newsize[1])
+            trj_plot = plt.subplot(121)
+            alt_plot = plt.subplot(122)
+            trj_plot.axis('equal')
+            # alt_plot.axis('equal')
+            self._dual_plot(trj_plot, alt_plot, data=real_data, batches=batches, color='grey', width=0.2)
+            self._dual_plot(trj_plot, alt_plot, data=gen_data, batches=batches, color='blue', width=0.5)
 
         name='{}-e{:04d}.png'.format(self.model_name, epoch)
-        full_filename=os.path.join(self.dir, 'plots',name)
+        if self.is_post_process is True:
+            full_filename=os.path.join(self.dir,'results', 'plots',name)
+        else:
+            full_filename = os.path.join(self.dir, 'plots', name)
         fig.savefig(full_filename)
         plt.close()
 

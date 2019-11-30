@@ -13,6 +13,7 @@ def parse_config_file(filename):
 
     if 'model' in config.sections():
         the_config['latent_dimension'] = config['model'].getint('latent_dimension', 10)
+        the_config['nfeatures'] = config['model'].getint('nfeatures', 2)
         the_config['generator_type'] = config['model'].get('generator_type', 'RNN')
         the_config['generator_RNN_cell'] = config['model'].get('generator_RNN_cell', 'LSTM')
         the_config['generator_hidden_units'] = config['model'].getint('generator_hidden_units', 10)

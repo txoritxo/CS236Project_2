@@ -211,7 +211,11 @@ def load_adapt_file2(filename, samples_per_flight=100, nfeatures=2,
             aux_data = np.expand_dims(np_data[:,0:nfeatures], axis=0)
             all_data  = np.append(all_data, aux_data, axis=0)
             flights_processed +=1
-            add_linestring(kml, np_data[:,[1,0]], name)
+            if nfeatures>2:
+                add_linestring(kml, np_data[:,[1,0,2]], name)
+            else:
+                add_linestring(kml, np_data[:, [1, 0]], name)
+
 
     kml.save('./kml/'+name+'.kml')
     # all_data=None
@@ -253,10 +257,12 @@ def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', nfeatures 
     nfiles_processed = 0
     total_flights = 0
     for dirName, subdirList, fileList in os.walk(rootDir):
+        nfiles = len(fileList)
+        total_nfiles = min(max_nfiles, nfiles)
         for fname in fileList:
             if fname.endswith('.pickle'):
-                print('\nProcessing file ' + fname)
                 nfiles_processed +=1
+                print('\nProcessing file ' + fname + '\t\t{:04d}/{:d}'.format(nfiles_processed, total_nfiles))
                 data , flights_in_file= load_adapt_file2(os.path.join(rootDir, fname), samples_per_flight,
                                                          start_lon_limits=start_lon_limits, start_lat_limits=start_lat_limits,
                                                          end_lon_limits=end_lon_limits, end_lat_limits=end_lat_limits,
@@ -358,8 +364,8 @@ def create_subset_from_file(filename, nflights):
 
 def test_dataset_generation(config_filename,nflights=100):
     create_adapt_dataset_from_config(config_filename)
-    open_and_plot_pickle_flight_file('GW20KF200lDC.pickle', nflights)
-    # open_and_plot_pickle_flight_file('JFK2LAXtest.pickle', nflights)
+    # open_and_plot_pickle_flight_file('GW20KF200lDC.pickle', nflights)
+    open_and_plot_pickle_flight_file('JFK2LAXtest.pickle', nflights)
 
 
 # batch_process_flight_files('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/04')
@@ -385,5 +391,5 @@ def test_dataset_generation(config_filename,nflights=100):
 # load_adapt_file2('../Data/Adapt/GW_dataset/flights_2018-01-08.pickle', samples_per_flight=200, nfeatures=2)
 # open_and_plot_pickle_flight_file('JFK2LAXtest.pickle', 394)
 
-test_dataset_generation('./config/dataset_baseline.ini', nflights=800)
-
+# test_dataset_generation('./config/dataset_baseline.ini', nflights=800)
+test_dataset_generation('./config/dataset_JFK2LAX.ini', nflights=800)

@@ -4,13 +4,13 @@ import os.path
 import sys
 import numpy as np
 import torch
-import Logger
 from Logger import Logger
 from torch.autograd.variable import Variable
 import matplotlib.pyplot as plt
 from time import time
 from torch.utils.data.sampler import SubsetRandomSampler
 import argparse
+import pickle
 
 qseed = 125
 
@@ -59,10 +59,19 @@ def noise(size, device):
 def load_dataset(cfg):
     filename = os.path.join('dataset', cfg['dataset'])
     print('\n Loading dataset file ' + filename)
-    data = np.load(filename)
+    data=None
+    nfeatures = cfg['nfeatures']
+    if filename.endswith('.npy'):
+        data = np.load(filename)
+    elif filename.endswith('.pickle'):
+        f = pickle.load(open(filename,'rb'))
+        data = f['dataset']
+    else:
+        raise Exception('\n dataset file has to be either .npy or .pickle')
     if data is None:
         raise Exception('Failed to open dataset: ' + filename)
 
+    data = data[:,:,0:nfeatures]
     np.random.seed(qseed)
     np.random.shuffle(data)
 
@@ -74,13 +83,14 @@ def load_dataset(cfg):
 
     nsamples  = data.shape[0]
     lsequence = data.shape[1]
-    nfeatures = data.shape[2]
+    nfeatures = cfg['nfeatures']
+    if nfeatures > data.shape[2]:
+        raise Exception('\nnfeatures defined in the configuration file is greater than features available in the dataset')
     print('\ndataset loaded, contains {} samples, sequence length is {} and features are {}'.format(
         dataset_size, lsequence, nfeatures))
 
     cfg['nsamples']  = nsamples
     cfg['lsequence'] = lsequence
-    cfg['nfeatures'] = nfeatures
     train_data = data[:split,]
     val_data   = data[split:]
 
