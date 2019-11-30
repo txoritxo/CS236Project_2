@@ -276,7 +276,9 @@ def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', nfeatures 
     print('\ndataset contains {:d} flights'.format(total_flights))
 
 def create_adapt_dataset_from_config(filename):
+    print('\nLoading dataset configuration file '+filename)
     cfg = qconfig.parse_dataset_config(filename)
+    print('\ndataset configuration parsed')
     create_adapt_dataset(cfg['source'],
                          name=cfg['id'],
                          max_nfiles=cfg['nfiles'],
@@ -345,7 +347,6 @@ def my_test(ndays):
     for i in range(ndays):
         newdate=init_date+datetime.timedelta(i)
         print('\n' + str(newdate))
-
 
 def create_subset_from_file(filename, nflights):
     data = np.load(filename)
