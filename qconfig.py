@@ -1,4 +1,5 @@
 import configparser
+from pathlib import Path
 
 def parse_config_file(filename):
     the_config = {}
@@ -42,4 +43,33 @@ def parse_config_file(filename):
 
     return the_config
 
+def parse_dataset_config(filename):
+    the_config = {}
+    config = configparser.ConfigParser()
+    config.read(filename)
+    if 'dataset' in config.sections():
+        the_config['id'] = config['dataset'].get('id', 'Unknown')
+        the_config['source'] = Path(config['dataset'].get('source','./'))
+        the_config['nfiles'] = config['dataset'].getint('nfiles', 1)
+        the_config['nsamples'] = config['dataset'].getint('samples_per_flight',200)
+        use_altitude =  config['dataset'].getboolean('use_altitude',False)
+        the_config['nfeatures'] = 3 if use_altitude else 2
+        the_config['resample_period'] = config['dataset'].getint('resample_period', 1)
+        start_min_lon = config['dataset'].getfloat('start_min_lon', None)
+        start_max_lon = config['dataset'].getfloat('start_max_lon', None)
+        start_min_lat = config['dataset'].getfloat('start_min_lat', None)
+        start_max_lat = config['dataset'].getfloat('start_max_lat', None)
+        the_config['start_window'] = {'lat':(start_min_lat,start_max_lat), 'lon':(start_min_lon,start_max_lon)}
+        end_min_lon = config['dataset'].getfloat('end_min_lon', None)
+        end_max_lon = config['dataset'].getfloat('end_max_lon', None)
+        end_min_lat = config['dataset'].getfloat('end_min_lat', None)
+        end_max_lat = config['dataset'].getfloat('end_max_lat', None)
+        the_config['end_window'] = {'lat':(end_min_lat,end_max_lat), 'lon':(end_min_lon,end_max_lon)}
+        alt_min = config['dataset'].getfloat('alt_min', None)
+        alt_max = config['dataset'].getfloat('40000', None)
+
+    else:
+        raise Exception('configuration file does not have a [experiment] section')
+
+    return the_config
 # parse_config_file('./config/template.ini')

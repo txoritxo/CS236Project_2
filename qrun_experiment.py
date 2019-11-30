@@ -1,4 +1,4 @@
-import qmodels
+import qgan_factory
 import qconfig
 import os.path
 import sys
@@ -93,7 +93,7 @@ def load_dataset(cfg):
 
 def resume_training(checkpoint_file):
     try:
-        the_gan, cfg, epoch = qmodels.GAN_factory.model_from_checkpoint(checkpoint_file)
+        the_gan, cfg, epoch = qgan_factory.GAN_factory.model_from_checkpoint(checkpoint_file)
         return the_gan, cfg, epoch
     except:
         print('\n error loading model from checkpoint file ' + checkpoint_file)
@@ -114,7 +114,7 @@ def run_experiment(filename, is_adaptative):
     if filename.endswith('.ini'):
         cfg=qconfig.parse_config_file(filename)
         train_dataloader, _ = load_dataset(cfg)
-        the_gan = qmodels.GAN_factory.model_from_config(cfg)
+        the_gan = qgan_factory.GAN_factory.model_from_config(cfg)
         copy_config_file_to_logs_folder(filename, cfg['id'])
 
     elif filename.endswith('.pth'):
