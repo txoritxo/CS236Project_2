@@ -266,7 +266,9 @@ def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', nfeatures 
                 if nfiles_processed >= max_nfiles: break
             else:
                 print('\nSkipping file ' + fname)
-
+    if dataset.size == 0:
+        print('\n no dataset was generated. Please check directory of reference data')
+        return
     norm_dataset, the_max, the_min = normalize_dataset(dataset)
     data = {'dataset':norm_dataset, 'max':the_max, 'min': the_min}
     with open(name+'.pickle', 'wb') as handle:
