@@ -1,7 +1,7 @@
 import torch
 import torch.optim as optim
 import torch.nn as nn
-from qmodels import QGenerator, QDiscriminator
+from qmodels import QGenerator, QDiscriminator, QDiscriminator_mmd
 from torch.autograd.variable import Variable
 
 class GAN():
@@ -35,24 +35,24 @@ class GAN():
 
         return d_loss
 
-    def train_discriminator2(self, real_data, fake_data):
+    def train_discriminator(self, real_data, fake_data):
         self.d_optimizer.zero_grad()
-
-        real_logits = self.discriminator(real_data)
         label_as_real = Variable(torch.ones_like(real_data),requires_grad=False)
-        real_loss = self.loss(real_logits, label_as_real)
-        # err_real.backward()
-
-        fake_logits = self.discriminator(fake_data)
         label_as_fake = Variable(torch.zeros_like(real_data),requires_grad=False)
-        fake_loss = self.loss(fake_logits, label_as_fake)
-        # err_fake.backward()
-        d_loss = ( real_loss + fake_loss ) / 2
-        d_loss.backward()
 
+        # Measure discriminator's ability to classify real from generated samples
+        real_logits = self.discriminator(real_data)
+        fake_logits = self.discriminator(fake_data.detach())
+
+        real_loss = self.loss(real_logits, label_as_real)
+        fake_loss = self.loss(fake_logits, label_as_fake)
+        d_loss = (real_loss + fake_loss) / 2
+
+        d_loss.backward()
         self.d_optimizer.step()
 
-        return d_loss, real_logits, fake_logits
+        return d_loss
+
 
     def train_generator(self, fake_data):
 
@@ -97,7 +97,8 @@ class GAN_factory:
     @staticmethod
     def default_gan(latent_dim = 10, nfeatures=1 , gen_hidRNN=100, gen_memory_layers=1,
                     dis_hidRNN=100, dis_memory_layers=1, use_cuda=False, lr=0.05, config=None,
-                    g_cell_type='LSTM', d_cell_type='LSTM',g_dropout=0, d_dropout=0):
+                    g_cell_type='LSTM', d_cell_type='LSTM',g_dropout=0, d_dropout=0,
+                    use_minibatch_discrimination=False):
 
         device = torch.device('cuda' if torch.cuda.is_available() and use_cuda else 'cpu')
 
@@ -107,7 +108,11 @@ class GAN_factory:
         generator = QGenerator(z_dim=latent_dim, output_size=nfeatures, hidRNN=gen_hidRNN, nlayers=gen_memory_layers,
                                cell_type=g_cell_type, bidirectional=g_bidirectional, dropout=g_dropout).to(device)
 
-        discriminator = QDiscriminator(nfeatures=nfeatures, hidRNN=dis_hidRNN, nlayers=dis_memory_layers,
+        if use_minibatch_discrimination:
+            discriminator = QDiscriminator_mmd(nfeatures=nfeatures, hidRNN=dis_hidRNN, nlayers=dis_memory_layers,
+                                       cell_type=d_cell_type, bidirectional=d_bidirectional, dropout=d_dropout).to(device)
+        else:
+            discriminator = QDiscriminator(nfeatures=nfeatures, hidRNN=dis_hidRNN, nlayers=dis_memory_layers,
                                        cell_type=d_cell_type, bidirectional=d_bidirectional, dropout=d_dropout).to(device)
         # generator = generator.float()
         # discriminator = discriminator.float()
@@ -139,7 +144,8 @@ class GAN_factory:
                                        g_cell_type=cfg['generator_RNN_cell'],
                                        d_cell_type=cfg['discriminator_RNN_cell'],
                                        g_dropout=cfg['generator_dropout'],
-                                       d_dropout=cfg['discriminator_dropout'])
+                                       d_dropout=cfg['discriminator_dropout'],
+                                       use_minibatch_discrimination=cfg['use_minibatch_discrimination'])
 
     @staticmethod
     def model_from_checkpoint(path):

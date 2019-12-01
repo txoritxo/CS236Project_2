@@ -1,7 +1,6 @@
 import torch
-import torch.optim as optim
 import torch.nn as nn
-from torch.autograd.variable import Variable
+import torchgan
 
 class QGenerator(nn.Module):
     def __init__(self, z_dim, output_size, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM', dropout=0):
@@ -67,4 +66,39 @@ class QDiscriminator(nn.Module):
         # out = self.sigmoid(out)
         return out
 
+
+class QDiscriminator_mmd(nn.Module): #minibatch_discrimination layer
+    def __init__(self, nfeatures=1, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=0):
+        super(QDiscriminator_mmd, self).__init__()
+        num_directions = 2 if bidirectional else 1
+        self.output_size= nfeatures
+        self.nfeatures  = nfeatures
+        self.hidR       = hidRNN
+        self.nlayers    = nlayers
+        self.mmd_out_features = 100
+        self.mmd_kernel_size = 16
+        seq_length=200
+        if cell_type in "LSTM":
+            self.LSTM   = nn.LSTM(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
+        elif cell_type in "GRU":
+            self.LSTM= nn.GRU(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
+        else:
+            raise Exception('Cell Type {} not recognized building the Discriminator'.format(cell_type))
+
+        # self.GRU1       = nn.GRU(self.hidC, self.hidR)
+        self.fc     = nn.Linear(self.hidR*num_directions, self.output_size)
+        self.mmd = torchgan.layers.MinibatchDiscrimination1d(seq_length * self.output_size,
+                                                             self.mmd_out_features, self.mmd_kernel_size)
+        self.fc2 = nn.Linear(seq_length*self.output_size+self.mmd_out_features, self.output_size)
+        print('\n Created Discriminator Class:\n ' + str(self))
+
+    def forward(self, x):
+        out,h = self.LSTM(x)
+        out = self.fc(out)
+        out = torch.flatten(out, start_dim=1)
+        out = self.mmd(out)
+        out = self.fc2(out)
+
+        # out = self.sigmoid(out)
+        return out
 
