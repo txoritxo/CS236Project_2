@@ -110,6 +110,7 @@ def generate_dtw_for_epoch_range(config_file, start_epoch=1, end_epoch=None, ski
         t=time()-t0
         print('\n{:6.0f} {:04d} , {:f}'.format(t, epoch, metric))
         f.write('\n{:6.0f}, {:d}, {:f}'.format(t,epoch, metric))
+        f.flush()
     f.close()
 
 def noise(size, device):
