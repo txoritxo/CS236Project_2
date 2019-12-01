@@ -230,13 +230,6 @@ def normalize_dataset(dataset):
     min = np.amin(temp, axis=0)
     the_max=percentilemax
     the_min=percentilemin
-    # if nfeatures > 2:
-    #     the_max = np.array([percentilemax[0], max[1], percentilemax[2]])
-    #     the_min = np.array([min[0], percentilemin[1], percentilemin[2]])
-    # else:
-    #     the_max = np.array([percentilemax[0], max[1]])
-    #     the_min = np.array([min[0], percentilemin[1]])
-    #
     norm_dataset = normalize_magnitude2(dataset, the_min, the_max)
     gt_than_one = np.transpose(np.where(norm_dataset>1))
     u1, c1 = np.unique(gt_than_one[:,0], return_counts=True)

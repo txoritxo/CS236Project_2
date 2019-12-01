@@ -9,7 +9,7 @@ def parse_config_file(filename):
         the_config['id']      = config['experiment'].get('id', 'Unknown')
         the_config['dataset'] = config['experiment'].get('dataset', 'Unknown')
     else:
-        raise Exception('configuration file does not have a [experiment] section')
+        raise Exception('configuration file ' + filename + ' does not have a [experiment] section')
 
     if 'model' in config.sections():
         the_config['latent_dimension'] = config['model'].getint('latent_dimension', 10)
