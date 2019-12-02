@@ -26,7 +26,11 @@ def parse_config_file(filename):
         the_config['discriminator_hidden_units'] = config['model'].getint('discriminator_hidden_units', 10)
         the_config['discriminator_RNN_layers'] = config['model'].getint('discriminator_RNN_layers', 1)
         the_config['discriminator_dropout'] = config['model'].getfloat('discriminator_dropout', 0)
+
         the_config['use_minibatch_discrimination'] = config['model'].getboolean('use_minibatch_discrimination', False)
+        the_config['minibatch_discrimination_kernel_size'] = config['model'].getint('minibatch_discrimination_kernel_size', 16)
+        the_config['minibatch_discrimination_features'] = config['model'].getint('minibatch_discrimination_features', 200)
+
     else:
         raise Exception('configuration file does not have a [model] section')
 

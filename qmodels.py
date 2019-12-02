@@ -68,15 +68,16 @@ class QDiscriminator(nn.Module):
 
 
 class QDiscriminator_mmd(nn.Module): #minibatch_discrimination layer
-    def __init__(self, nfeatures=1, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=0):
+    def __init__(self, nfeatures=1, hidRNN=100, nlayers=1, bidirectional=False, cell_type='LSTM',dropout=0,
+                 mmd_kernel_size=16, mmd_out_features=200):
         super(QDiscriminator_mmd, self).__init__()
         num_directions = 2 if bidirectional else 1
         self.output_size= nfeatures
         self.nfeatures  = nfeatures
         self.hidR       = hidRNN
         self.nlayers    = nlayers
-        self.mmd_out_features = 200
-        self.mmd_kernel_size = 16
+        self.mmd_out_features = mmd_out_features
+        self.mmd_kernel_size = mmd_kernel_size
         self.seq_length=200
         if cell_type in "LSTM":
             self.LSTM   = nn.LSTM(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)

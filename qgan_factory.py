@@ -132,6 +132,8 @@ class GAN_factory:
         if not 'generator_dropout'in cfg: cfg['generator_dropout'] = 0
         if not 'discriminator_dropout' in cfg: cfg['discriminator_dropout'] = 0
         if not 'use_minibatch_discrimination' in cfg: cfg['use_minibatch_discrimination'] = False
+        if not 'minibatch_discrimination_kernel_size' in cfg: cfg['minibatch_discrimination_kernel_size'] = 16
+        if not 'minibatch_discrimination_features' in cfg: cfg['minibatch_discrimination_features'] = 200
 
         return GAN_factory.default_gan(latent_dim=cfg['latent_dimension'],
                                        nfeatures=cfg['nfeatures'],
