@@ -75,9 +75,9 @@ class QDiscriminator_mmd(nn.Module): #minibatch_discrimination layer
         self.nfeatures  = nfeatures
         self.hidR       = hidRNN
         self.nlayers    = nlayers
-        self.mmd_out_features = 100
+        self.mmd_out_features = 200
         self.mmd_kernel_size = 16
-        seq_length=200
+        self.seq_length=200
         if cell_type in "LSTM":
             self.LSTM   = nn.LSTM(self.nfeatures, self.hidR, self.nlayers, batch_first=True, bidirectional=bidirectional,dropout=dropout)
         elif cell_type in "GRU":
@@ -87,9 +87,9 @@ class QDiscriminator_mmd(nn.Module): #minibatch_discrimination layer
 
         # self.GRU1       = nn.GRU(self.hidC, self.hidR)
         self.fc     = nn.Linear(self.hidR*num_directions, self.output_size)
-        self.mmd = torchgan.layers.MinibatchDiscrimination1d(seq_length * self.output_size,
+        self.mmd = torchgan.layers.MinibatchDiscrimination1d(self.seq_length * self.output_size,
                                                              self.mmd_out_features, self.mmd_kernel_size)
-        self.fc2 = nn.Linear(seq_length*self.output_size+self.mmd_out_features, self.output_size)
+        self.fc2 = nn.Linear(self.seq_length*self.output_size+self.mmd_out_features, self.seq_length*self.output_size)
         print('\n Created Discriminator Class:\n ' + str(self))
 
     def forward(self, x):
@@ -98,6 +98,7 @@ class QDiscriminator_mmd(nn.Module): #minibatch_discrimination layer
         out = torch.flatten(out, start_dim=1)
         out = self.mmd(out)
         out = self.fc2(out)
+        out = out.view(-1,self.seq_length,self.output_size)
 
         # out = self.sigmoid(out)
         return out
