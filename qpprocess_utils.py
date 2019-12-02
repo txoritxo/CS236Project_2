@@ -27,6 +27,7 @@ def get_checkpoint_path(identifier, epoch):
     return checkpoint_path
 
 def compute_distance_for_sample(sample_id,fake_data,real_data,nsamples):
+    print('\nComputing distance for sample!!')
     distance=0
     x=fake_data[sample_id,]
     for j in range(nsamples):
@@ -51,12 +52,13 @@ def generate_dtw_for_epoch_parallel(identifier, epoch, real_data, nsamples=None,
     fake_data = the_gan.generator(z)[:,:,0:1]
     fake_data = fake_data.detach().cpu().numpy()
     total_distance=0
+    with mp.Pool(processes=ncpus) as pool:
+        result_objects = [pool.apply_async(compute_distance_for_sample, args=(sample_id,fake_data,real_data,nsamples)) for sample_id in range(nsamples)]
+        results = [r.get()[1] for r in result_objects]
+        pool.close()
+        pool.join()
 
-    pool = mp.Pool(ncpus)
-    result_objects = [pool.apply_async(compute_distance_for_sample, args=(sample_id,fake_data,real_data,nsamples)) for sample_id in range(nsamples)]
-    results = [r.get()[1] for r in result_objects]
-    pool.close()
-    pool.join()
+    print('\n I should be computing the mean here! **************************')
     mean = total_distance/nsamples**2
     return mean
 

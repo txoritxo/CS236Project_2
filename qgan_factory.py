@@ -110,7 +110,9 @@ class GAN_factory:
 
         if use_minibatch_discrimination:
             discriminator = QDiscriminator_mmd(nfeatures=nfeatures, hidRNN=dis_hidRNN, nlayers=dis_memory_layers,
-                                       cell_type=d_cell_type, bidirectional=d_bidirectional, dropout=d_dropout).to(device)
+                                       cell_type=d_cell_type, bidirectional=d_bidirectional, dropout=d_dropout,
+                                       mmd_kernel_size=config['minibatch_discrimination_kernel_size'],
+                                       mmd_out_features=config['minibatch_discrimination_features']).to(device)
         else:
             discriminator = QDiscriminator(nfeatures=nfeatures, hidRNN=dis_hidRNN, nlayers=dis_memory_layers,
                                        cell_type=d_cell_type, bidirectional=d_bidirectional, dropout=d_dropout).to(device)
@@ -148,7 +150,8 @@ class GAN_factory:
                                        d_cell_type=cfg['discriminator_RNN_cell'],
                                        g_dropout=cfg['generator_dropout'],
                                        d_dropout=cfg['discriminator_dropout'],
-                                       use_minibatch_discrimination=cfg['use_minibatch_discrimination'])
+                                       use_minibatch_discrimination=cfg['use_minibatch_discrimination']
+                                       )
 
     @staticmethod
     def model_from_checkpoint(path):
