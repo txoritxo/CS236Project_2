@@ -90,8 +90,9 @@ class Logger:
             self._plot1D(ax, data=gen_data, batches=batches, color='blue', width=0.5)
 
         elif nfeatures == 2:
-            self._plot2D(ax, data=real_data, batches=batches, color='grey', width=0.2)
-            self._plot2D(ax, data=gen_data, batches=batches, color='blue', width=0.5)
+            self._plot2D(ax, data=real_data, batches=batches, color='grey', width=0.1)
+            self._plot2D(ax, data=gen_data, batches=batches, color='blue', width=0.1)
+            plt.axis('equal')
         elif nfeatures == 3:
             newsize=fig.get_size_inches()*[2,1]
             fig.set_size_inches(newsize[0], newsize[1])
@@ -99,8 +100,13 @@ class Logger:
             alt_plot = plt.subplot(122)
             trj_plot.axis('equal')
             # alt_plot.axis('equal')
-            self._dual_plot(trj_plot, alt_plot, data=real_data, batches=batches, color='grey', width=0.2)
-            self._dual_plot(trj_plot, alt_plot, data=gen_data, batches=batches, color='blue', width=0.5)
+            self._dual_plot(trj_plot, alt_plot, data=real_data, batches=batches, color='grey', width=0.1)
+            self._dual_plot(trj_plot, alt_plot, data=gen_data, batches=batches, color='blue', width=0.1)
+            fig.text(0.3, 0.04, 'normalized longitude', ha='center', va='center')
+            fig.text(0.06, 0.5, 'normalized latitude', ha='center', va='center', rotation='vertical')
+            fig.text(0.75, 0.04, 'trajectory sample', ha='center', va='center')
+            fig.text(0.5, 0.5, 'normalized altitude', ha='center', va='center', rotation='vertical')
+
 
         name='{}-e{:04d}.png'.format(self.model_name, epoch)
         if self.is_post_process is True:
