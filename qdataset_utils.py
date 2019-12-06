@@ -171,10 +171,11 @@ def remove_slow_speed(data, min_speed):
 
 def load_adapt_file2(filename, samples_per_flight=100, nfeatures=2,
                      start_lon_limits=None, start_lat_limits=None,
-                     end_lon_limits=None, end_lat_limits=None):
+                     end_lon_limits=None, end_lat_limits=None,
+                     name=''):
     data=pd.read_pickle(filename)
     flights_grouped=data.groupby(['part_date_utc','flight'])
-    name = 'flights' + str(data['part_date_utc'][0])
+    name = name + 'flights' + str(data['part_date_utc'][0])
     i=0
     kml = simplekml.Kml(open=1)
     sz=samples_per_flight
@@ -259,7 +260,8 @@ def create_adapt_dataset(rootDir, max_nfiles=1e5, name='GWdataset01', nfeatures 
                 data , flights_in_file= load_adapt_file2(os.path.join(rootDir, fname), samples_per_flight,
                                                          start_lon_limits=start_lon_limits, start_lat_limits=start_lat_limits,
                                                          end_lon_limits=end_lon_limits, end_lat_limits=end_lat_limits,
-                                                         nfeatures=nfeatures)
+                                                         nfeatures=nfeatures,
+                                                         name=name)
                 dataset = np.append(dataset, data, axis=0)
                 total_flights += flights_in_file
                 if nfiles_processed >= max_nfiles: break
@@ -290,6 +292,7 @@ def create_adapt_dataset_from_config(filename):
                          end_lon_limits=cfg['end_window']['lon'],
                          end_lat_limits=cfg['end_window']['lat'],
                          )
+    return cfg
 
 def split_into_train_test_val(pct_train, pct_val, filename):
     data = np.load(filename)
@@ -356,9 +359,10 @@ def create_subset_from_file(filename, nflights):
     np.save(name, subset)
 
 def test_dataset_generation(config_filename,nflights=100):
-    create_adapt_dataset_from_config(config_filename)
+    cfg = create_adapt_dataset_from_config(config_filename)
+    filename = cfg['id']+'.pickle'
     # open_and_plot_pickle_flight_file('GW20KF200lDC.pickle', nflights)
-    open_and_plot_pickle_flight_file('JFK2LAXtest.pickle', nflights)
+    open_and_plot_pickle_flight_file(filename, nflights)
 
 
 # batch_process_flight_files('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/04')
@@ -377,6 +381,7 @@ def test_dataset_generation(config_filename,nflights=100):
 # create_adapt_dataset('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/GW_dataset', 5, samples_per_flight=200, name='GW20KF200lDC', lon_limits  = (-2.84, 2.50),lat_limits = (49.45, 51.26))
 # create_adapt_dataset_from_config('./config/dataset_baseline.ini')
 # create_adapt_dataset('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/JFK2LAX_dataset', 1, samples_per_flight=10, name='JFK2LAXTest')
+# create_adapt_dataset('C:/Users/Carlos/local/development/Stanford/DeepGenerativeModels/project/sw/Data/Adapt/JFK2LAX_dataset', 1, samples_per_flight=10, name='JFK2LAXTest')
 # open_and_plot_npy_flight_file('GW20KF200lDC.npy', 100)
 # open_and_plot_lon_lat('subset_20000_flights.npy')
 # create_subset_from_file('GW20KF200l.npy', 20000)
@@ -385,4 +390,6 @@ def test_dataset_generation(config_filename,nflights=100):
 # open_and_plot_pickle_flight_file('JFK2LAXtest.pickle', 394)
 
 # test_dataset_generation('./config/dataset_baseline.ini', nflights=800)
-test_dataset_generation('./config/dataset_JFK2LAX.ini', nflights=800)
+# test_dataset_generation('./config/dataset_JFK2LAX.ini', nflights=800)
+# create_adapt_dataset_from_config('./config/dataset_GW_allClusters.ini')
+test_dataset_generation('./config/dataset_GW_allClusters.ini', nflights=800)
