@@ -200,6 +200,7 @@ def generate_real_plots(filename, numsamples=10):
     plt.axis('equal')
     plt.xlabel('normalized longitude')
     plt.ylabel('normalized latitude')
+    plt.title('2D Trajectory')
     fig.savefig('./real_trajectories_xy.png')
     plt.close()
 
@@ -211,6 +212,7 @@ def generate_real_plots(filename, numsamples=10):
         ax.plot(zpoints, color='black', linewidth=0.05)
     plt.xlabel('trajectory sample')
     plt.ylabel('normalized altitude')
+    plt.title('Altitude profile')
     fig.savefig('./real_trajectories_z.png')
     plt.close()
 
