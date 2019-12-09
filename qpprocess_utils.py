@@ -216,18 +216,18 @@ def generate_real_plots(filename, numsamples=10):
     fig.savefig('./real_trajectories_z.png')
     plt.close()
 
-def plot_real_vs_gen(model, data, cfg, epoch=0, numsamples=10):
+def plot_real_vs_gen(model, data, cfg, epoch=0, numsamples=10, title=None):
     device = torch.device('cuda' if torch.cuda.is_available() and cfg['use_cuda'] else 'cpu')
     z = noise((numsamples, cfg['lsequence'], cfg['latent_dimension']), device)
     fake_data = model.generator(z)
     real_data = torch.from_numpy(data[0:numsamples])
     dir = os.path.join('./logs', cfg['id'])
     logger = Logger(model_name = cfg['id'], dir=dir, model=model, epoch=epoch, post_process=True)
-    logger.plot(epoch, fake_data, real_data, numsamples)
+    logger.plot(epoch, fake_data, real_data, numsamples, title=title)
 
-def generate_plots_for_model(filename, numsamples=100):
+def generate_plots_for_model(filename, numsamples=100, title=None):
     the_model, data, cfg, epoch = load_model_and_dataset(filename)
-    plot_real_vs_gen(the_model, data, cfg, epoch, numsamples)
+    plot_real_vs_gen(the_model, data, cfg, epoch, numsamples, title=title)
 
 
 # generate_plots_for_model('./logs/GW60KSE3D_GRU1/checkpoint/GW60KSE3D_GRU1-e0000.pth', numsamples=100)
@@ -240,14 +240,15 @@ parser.add_argument('--input_file', help='tbd', default="config/template.ini")
 parser.add_argument('--start_epoch', help='tbd', default=0)
 parser.add_argument('--end_epoch', help='tbd', default=10000)
 parser.add_argument('--nsamples', help='tbd', default=100)
+parser.add_argument('--title', help='tbd', default=None)
 
 args = parser.parse_args()
 if args.generate_dtw:
     generate_dtw_for_epoch_range(args.input_file, start_epoch=int(args.start_epoch), end_epoch=int(args.end_epoch),
                                  skip_epoch=1, nsamples=int(args.nsamples))
 elif args.generate_plots:
-    generate_plots_for_model(args.input_file, numsamples=int(args.nsamples))
+    generate_plots_for_model(args.input_file, numsamples=int(args.nsamples), title=args.title)
 elif args.generate_real_plots:
-    generate_real_plots(args.input_file, numsamples=int(args.nsamples))
+    generate_real_plots(args.input_file, numsamples=int(args.nsamples), title=args.title)
 else:
     print('\nPlease select --generate_dtw or --generate_plots')
