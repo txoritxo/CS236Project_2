@@ -24,4 +24,4 @@ The file **qpprocess_data.py** contains several utils for the following:
 
 ## Example Results
 The plot below corresponds to the results obtained with a 2-layer GRU with minibatch discrimination layer.
-![](https://github.com/txoritxo/CS236Project_2.git/mmdgru.png)
+![](./mmdgru.png)
