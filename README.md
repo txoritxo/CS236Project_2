@@ -4,9 +4,11 @@ This repository contains the python software supporting the project "Generation 
 ## Defining and Training a model
 Directory ./config contains a wide set of configuration files that were used for the experiments. In these configuration files there is the definition of parameters like the particular dataset file to be used, generator and discriminator model architectures and parameters, training parameters, etc. It is best to have a look at the files as they are quite self-explanatory.
 Once the configuration is finished, train with the following command
+
 `$python qqrun_experiment.py --config_file ./config/your_config_file_here.ini `
 
 To resume training from a checkpoint file, use the following command
+
 `$python qqrun_experiment.py --config_file ./logs/path_to_your_checkpoint_file.pth `
 
 The training process will log inside ./logs directory the following information:
