@@ -216,24 +216,25 @@ def generate_real_plots(filename, numsamples=10):
     fig.savefig('./real_trajectories_z.png')
     plt.close()
 
-def plot_real_vs_gen(model, data, cfg, epoch=0, numsamples=10, title=None):
+def plot_real_vs_gen(model, data, cfg, epoch=0, numsamples=10, title=None, force2D=None):
     device = torch.device('cuda' if torch.cuda.is_available() and cfg['use_cuda'] else 'cpu')
     z = noise((numsamples, cfg['lsequence'], cfg['latent_dimension']), device)
     fake_data = model.generator(z)
     real_data = torch.from_numpy(data[0:numsamples])
     dir = os.path.join('./logs', cfg['id'])
     logger = Logger(model_name = cfg['id'], dir=dir, model=model, epoch=epoch, post_process=True)
-    logger.plot(epoch, fake_data, real_data, numsamples, title=title)
+    logger.plot(epoch, fake_data, real_data, numsamples, title=title, force2D=force2D)
 
-def generate_plots_for_model(filename, numsamples=100, title=None):
+def generate_plots_for_model(filename, numsamples=100, title=None, force2D=None):
     the_model, data, cfg, epoch = load_model_and_dataset(filename)
-    plot_real_vs_gen(the_model, data, cfg, epoch, numsamples, title=title)
+    plot_real_vs_gen(the_model, data, cfg, epoch, numsamples, title=title, force2D=force2D)
 
 
 # generate_plots_for_model('./logs/GW60KSE3D_GRU1/checkpoint/GW60KSE3D_GRU1-e0000.pth', numsamples=100)
 # generate_dtw_for_epoch_range('./config/GW60KSE3D_GRU01.ini', start_epoch=0, end_epoch=5, skip_epoch=1, nsamples=20)
 parser = argparse.ArgumentParser(description='')
 parser.add_argument('--generate_dtw', help='tbd',action='store_true')
+parser.add_argument('--force2D', help='tbd',action='store_true')
 parser.add_argument('--generate_plots', help='tbd',action='store_true')
 parser.add_argument('--generate_real_plots', help='tbd',action='store_true')
 parser.add_argument('--input_file', help='tbd', default="config/template.ini")
@@ -243,12 +244,17 @@ parser.add_argument('--nsamples', help='tbd', default=100)
 parser.add_argument('--title', help='tbd', default=None)
 
 args = parser.parse_args()
+force2D=True if args.force2D else False
+
 if args.generate_dtw:
     generate_dtw_for_epoch_range(args.input_file, start_epoch=int(args.start_epoch), end_epoch=int(args.end_epoch),
                                  skip_epoch=1, nsamples=int(args.nsamples))
 elif args.generate_plots:
-    generate_plots_for_model(args.input_file, numsamples=int(args.nsamples), title=args.title)
+    generate_plots_for_model(args.input_file, numsamples=int(args.nsamples), title=args.title, force2D=force2D)
 elif args.generate_real_plots:
     generate_real_plots(args.input_file, numsamples=int(args.nsamples), title=args.title)
 else:
     print('\nPlease select --generate_dtw or --generate_plots')
+
+
+#python pprocess_utils.py --generate_plots --input_file ./logs/GW60KSE3D_MMD_GRU02/checkpoint/GW60KSE3D_MMD_GRU02-e0199.pth --nsamples 75 --title "2-layer GRU with Minibatch Discrimination layer"

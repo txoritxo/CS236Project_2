@@ -86,11 +86,14 @@ class Logger:
                 plt1.legend()
                 plt2.legend()
 
-    def plot(self, epoch, gen_data, real_data, nsamples=10, title=None):
+    def plot(self, epoch, gen_data, real_data, nsamples=10, title=None, force2D=False):
         fig = plt.figure()
         ax = plt.axes()
         batches = min(nsamples, len(gen_data))
         nfeatures=gen_data.size(2)
+        if force2D is True:
+            nfeatures = min(nfeatures,2)
+
         custom_lines = [Line2D([0], [0], color='grey', lw=4),
                         Line2D([0], [0], color='blue', lw=4)]
 
@@ -114,7 +117,7 @@ class Logger:
             fig.set_size_inches(newsize[0], newsize[1])
             trj_plot = plt.subplot(121)
             alt_plot = plt.subplot(122)
-            trj_plot.axis('equal')
+            # trj_plot.axis('equal')
             # alt_plot.axis('equal')
             self._dual_plot(trj_plot, alt_plot, data=real_data, batches=batches, color='grey', width=0.1,legend='real')
             self._dual_plot(trj_plot, alt_plot, data=gen_data, batches=batches, color='blue', width=0.1, legend='fake')
