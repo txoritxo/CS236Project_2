@@ -12,7 +12,7 @@ To resume training from a checkpoint file, use the following command
 `$python qqrun_experiment.py --config_file ./logs/path_to_your_checkpoint_file.pth `
 
 The training process will log inside ./logs directory the following information:
-+ ** training log**, including time, epoch, generator loss, discriminator loss, GAN loss
++ **training log**, including time, epoch, generator loss, discriminator loss, GAN loss
 + **plots** of generated data vs real data for every epoch
 + **checkpoint** file of the model for every epoch
 
